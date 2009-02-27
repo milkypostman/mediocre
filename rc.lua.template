@@ -1,7 +1,7 @@
 require("mediocre")
 require("beautiful")
 
-theme = "shiki"
+theme = "guinness"
 themePath = os.getenv("HOME").."/.config/awesome/themes/"..theme
 beautiful.init(themePath)
 
@@ -45,8 +45,8 @@ end
 
 local bindings = {}
 bindings.global = {
-    [{  mod.super, "Return"}] = function() spawn(terminal) end,
-    [{  mod.super, "f"}] = function() spawn(browser) end,
+    [{ mod.super, "Return"}] = function() spawn(terminal) end,
+    [{ mod.super, "f"}] = function() spawn(browser) end,
     [{ mod.super_control, "r" }] = mediocre.restart,
     [{ mod.super, "h" }] = mediocre.left,
     [{ mod.super, "l" }] = mediocre.right,

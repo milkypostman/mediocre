@@ -24,6 +24,8 @@ tags = otable()
 
 Tag = util.class(function(klass, name, ratios )
     klass.groups = {[0]=group.Group(klass, layout.floating), [1] = group.Group(klass, layout.max)}
+    klass.groups[0].tagidx = 0
+    klass.groups[1].tagidx = 1
     klass.current = 1
     klass.name = name
     klass.ratios = ratios or {}
