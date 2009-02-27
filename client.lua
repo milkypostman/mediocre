@@ -11,6 +11,7 @@ local pairs = pairs
 local ipairs = ipairs
 local tostring = tostring
 local type = type
+local math = math
 local setmetatable = setmetatable
 
 local capi = {
@@ -60,10 +61,38 @@ function Client:focus()
     capi.client.focus = self.client
 end
 
+function Client:orphan()
+    for grp,v in pairs(self.groups) do
+        grp:remove(self)
+    end
+    self.client:tags({})
+end
+
+function Client:move(t)
+    local s = screen()
+    local ot = screen():tag()
+    local nt = screen():tag(t)
+    if not ot or not nt then return end
+
+    -- remove from all groups
+    self:orphan()
+
+    local cg
+    local n = math.min(ot.current, 1)
+    local cg = nt:group(n)
+    if not cg then
+        util.debug("creating group")
+        cg = group.Group(nt)
+        nt:add(cg)
+    end
+    cg:add(self)
+    self.client:tags({nt.tag})
+end
+
 -- when we focus by client then we have to worry about getting our tree
 -- structure pointing right again.  this should only happen when we focus by
 -- mouse, or urgent.
-focus = {enabled = true}
+focus = {enabled = false}
 function focus.disable()
     focus.enabled = false
 end
@@ -72,6 +101,7 @@ function focus.enable()
 end
 function focus.run(c)
     if focus.enabled then
+        util.debug("--Focus Function")
         focus.enabled = false
         local old = screen():tag():group():client()
         local cli = clients[c]
@@ -89,9 +119,7 @@ function focus.run(c)
             end
         end
         cli:focus()
-        focus.enabled = true
     end
-    focus.enabled=true
 end
 setmetatable(focus, {__call = function(_,c) focus.run(c) end})
 
@@ -110,13 +138,10 @@ local function manage(c, startup)
     if c.type ~= "normal" then
         cg = t:group(0)
     else
-        local n = t.current
-        if n == 0 then
-            n = 1
-        end
-        cg = t:group(n)
+        cg = t:group()
     end
     if not cg then
+        util.debug("creating group")
         cg = group.Group(t)
         t:add(cg)
     end
@@ -127,20 +152,20 @@ end
 
 local function unmanage(c)
     local cls = clients[c]
-    for grp,v in pairs(cls.groups) do
-        grp:remove(cls)
-        if not grp.floating and #grp.clients == 0 then
-            grp.tag:remove(grp)
-        end
-    end
+    cls:orphan()
     if c.transient_for then
         local cc = clients[c.transient_for]
         cc:focus()
     else
-        screen():tag():group():client():focus()
+        local g = screen():tag():group()
+        if not g then return end
+        local cc = g:client()
+        if not cc then return end
+        cc:focus()
     end
 end
 
+hooks.mouse_enter.register(focus.enable)
 hooks.manage.register(manage)
 hooks.unmanage.register(unmanage)
 hooks.focus.register(focus.run)

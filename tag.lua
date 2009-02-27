@@ -50,9 +50,10 @@ function Tag:remove(grp)
             break
         end
     end
-    if #self.groups and self.current > #self.groups then
+    if #self.groups ~= 0 and self.current > #self.groups then
         self.current = #self.groups
     end
+    util.debug("grp:" .. tostring(self.current))
 end
 
 function Tag:set(grp)
@@ -87,9 +88,6 @@ function Tag:move(dir)
     ng:add(c)
 
     self.current = nextidx
-    if #og.clients == 0 then
-        self:remove(og)
-    end
 end
 
 function Tag:arrange(wa)

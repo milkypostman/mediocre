@@ -26,8 +26,9 @@ Screen = util.class(function(klass, s)
     klass.screen = s
 end)
 
-function Screen:tag()
-    return self.tags[self.current]
+function Screen:tag(t)
+    local t = t or self.current
+    return self.tags[t]
 end
 
 function Screen:add(t)
@@ -38,6 +39,26 @@ function Screen:add(t)
         t.tag.selected = true
     end
 end
+
+function Screen:goto(t)
+    if not t then return end
+
+    local cur = self.tags[self.current]
+    local new = self.tags[t]
+    if not new then
+        return
+    end
+
+    self.current = t
+    cur.tag.selected = false
+    new.tag.selected = true
+    local g = self:tag():group()
+    if not g then return end
+    local c = g:client()
+    if not c then return end
+    c:focus()
+end
+
 
 function current()
     return screens[_current]

@@ -70,7 +70,7 @@ function Group:remove(c)
         c.groups[self] = nil
 
         table.remove(self.clients, self.current)
-        if #self.clients and self.current > #self.clients then
+        if #self.clients ~= 1 and self.current > #self.clients then
             self.current = #self.clients
         end
     else
@@ -84,6 +84,11 @@ function Group:remove(c)
         if #self.clients and self.current > #self.clients then
             self.current = #self.clients
         end
+    end
+
+    if self ~= self.tag.groups[0] and #self.clients == 0 then
+        util.debug("removing group")
+        self.tag:remove(self)
     end
 end
 
