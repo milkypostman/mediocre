@@ -42,7 +42,13 @@ end
 function Tag:add(g, idx)
     local idx = idx or self.current
     util.debug("adding group at: "..idx)
-    table.insert(self.groups, idx, g)
+    for i = #self.groups, idx, -1 do
+        local grp = self.groups[i]
+        grp.tagidx = i+1
+        self.groups[i+1] = grp
+    end
+    self.groups[idx] = g
+    g.tagidx = idx
 end
 
 function Tag:focus()
@@ -51,16 +57,25 @@ function Tag:focus()
     g:focus()
 end
 
-function Tag:remove(grp)
+function Tag:remove(g)
     -- make sure not to use group 0
     -- floating group always exists
-    for i = 1, #self.groups do
-        local g = self.groups[i]
-        if g == grp then
-            table.remove(self.groups, i)
-            break
-        end
+--    for i = 1, #self.groups do
+--        local g = self.groups[i]
+--        if g == grp then
+--            table.remove(self.groups, i)
+--            break
+--        end
+--    end
+    local g = g or self.groups[self.current]
+    for i = g.tagidx, #self.groups-1 do
+        local grp = self.groups[i+1]
+        grp.tagidx = i
+        self.groups[i] = grp
     end
+    self.groups[#self.groups] = nil
+    g.tagidx = nil
+
     if #self.groups > 0 and self.current > #self.groups then
         self.current = #self.groups
     end

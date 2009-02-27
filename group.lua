@@ -37,30 +37,58 @@ end
 
 function Group:move_next()
     local idx = (self.current % #self.clients) + 1
-    local c = table.remove(self.clients, self.current)
-    table.insert(self.clients, idx, c)
+    local c = self.clients[self.current]
+    if idx == 1 then
+        self:remove(c)
+        self:add(c, idx)
+    else
+        self:swap_by_idx(self.current, idx)
+    end
     self.current = idx
+end
+
+function Group:swap_by_idx(c1, c2)
+    local cli1 = self.clients[c1]
+    local cli2 = self.clients[c2]
+
+    self.clients[c1] = cli2
+    self.clients[c2] = cli1
+
+    cli1.groups[self] = c2
+    cli2.groups[self] = c1
 end
 
 function Group:move_prev()
     local idx = ((self.current-2) % #self.clients) + 1
-    local c = table.remove(self.clients, self.current)
-    table.insert(self.clients, idx, c)
+    local c = self.clients[self.current]
+    if idx == #self.clients then
+        self:remove(c)
+        self:add(c, idx)
+    else
+        self:swap_by_idx(self.current, idx)
+    end
     self.current = idx
 end
 
-function Group:add(c)
-    table.insert(self.clients, self.current, c)
-    c.groups[self] = true
-    return self.current
+function Group:add(c, idx)
+    local idx = idx or self.current
+    for i = #self.clients, idx, -1 do
+        local cli = self.clients[i]
+        cli.groups[self] = i+1
+        self.clients[i+1] = cli
+    end
+    self.clients[idx] = c
+    c.groups[self] = idx
+    --table.insert(self.clients, self.current, c)
 end
 
 function Group:set(cli)
-    for i, c in ipairs(self.clients) do
-        if cli == c then
-            self.current = i
-        end
-    end
+    --for i, c in ipairs(self.clients) do
+        --if cli == c then
+            --self.current = i
+        --end
+    --end
+    self.current = cli.groups[self]
 end
 
 function Group:focus()
@@ -70,30 +98,22 @@ function Group:focus()
 end
 
 function Group:remove(c)
-    if not c then
-        local idx = self.current
-        local c = self.clients[idx]
-        c.groups[self] = nil
+    local c = c or self.clients[self.current]
+    if not c then return end
 
-        table.remove(self.clients, self.current)
-        if #self.clients ~= 1 and self.current > #self.clients then
-            self.current = #self.clients
-        end
-    else
-        for i,k in ipairs(self.clients) do
-            if k == c then
-                table.remove(self.clients, i)
-                k.groups[self] = nil
-                break
-            end
-        end
-        if #self.clients > 0 and self.current > #self.clients then
-            self.current = #self.clients
-        end
+    for i = c.groups[self], #self.clients-1 do
+        local cli = self.clients[i+1]
+        cli.groups[self] = i
+        self.clients[i] = cli
+    end
+    self.clients[#self.clients] = nil
+    c.groups[self] = nil
+
+    if #self.clients > 0 and self.current > #self.clients then
+        self.current = #self.clients
     end
 
-    if  #self.clients == 0 and self ~= self.tag.groups[0] and (self ~= self.tag.groups[1] or #self.tag.groups >1) then
-        util.debug("removing group")
+    if  #self.clients == 0 and self.tagidx ~= 0 and (self.tagidx ~= 1 or #self.tag.groups >1) then
         self.tag:remove(self)
     end
 end
