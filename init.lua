@@ -11,7 +11,8 @@ local table = table
 local awesome = awesome
 local type = type
 local capi = {
-    hooks = hooks
+    hooks = hooks,
+    screen = screen,
 }
 
 require("mediocre.screen")
@@ -20,6 +21,7 @@ require("mediocre.group")
 require("mediocre.client")
 require("mediocre.layout")
 require("mediocre.util")
+require("mediocre.widget")
 
 --- Mediocre replacement of the awful functions
 module("mediocre")
@@ -99,6 +101,7 @@ function restart()
         return c
     end
 
+    util.debug("Restarting...")
     awesome.restart()
 end
 
@@ -117,7 +120,6 @@ function float_layer()
     t.current=0
     capi.hooks.arrange()(screen().screen)
 end
-
 
 
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80

@@ -70,8 +70,8 @@ end
 
 function Client:move(t)
     local s = screen()
-    local ot = screen():tag()
-    local nt = screen():tag(t)
+    local ot = s:tag()
+    local nt = s:tag(t)
     if not ot or not nt then return end
 
     -- remove from all groups
@@ -87,6 +87,12 @@ function Client:move(t)
     end
     cg:add(self)
     self.client:tags({nt.tag})
+
+    local g = ot:group()
+    if not g then return end
+    local c = g:client()
+    if not c then return end
+    c:focus()
 end
 
 -- when we focus by client then we have to worry about getting our tree

@@ -6,6 +6,7 @@
 
 local otable = otable
 local table = table
+local ipairs = ipairs
 local tostring = tostring
 local setmetatable = setmetatable
 local capi = {
@@ -17,8 +18,7 @@ local util = require("mediocre.util")
 
 module("mediocre.screen")
 
-screens = {}
-local _current
+tags = {}
 
 Screen = util.class(function(klass, s)
     klass.tags = {}
@@ -46,7 +46,17 @@ function Screen:goto(t)
     local cur = self.tags[self.current]
     local new = self.tags[t]
     if not new then
-        return
+        --util.debug("here we are")
+        -- we may have been passed a tag object
+        for i, tg in ipairs(self.tags) do
+            if tg == t then
+                --util.debug("Founds")
+                new = tg
+                t = i
+                break
+            end
+        end
+        if not new then return end
     end
 
     self.current = t
@@ -54,11 +64,14 @@ function Screen:goto(t)
     new.tag.selected = true
     local g = self:tag():group()
     if not g then return end
+    util.debug("done")
     local c = g:client()
     if not c then return end
     c:focus()
 end
 
+screens = {}
+local _current
 
 function current()
     return screens[_current]

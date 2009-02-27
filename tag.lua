@@ -20,15 +20,20 @@ local layout = require("mediocre.layout")
 
 module("mediocre.tag")
 
+tags = otable()
+
 Tag = util.class(function(klass, name, ratios )
     klass.groups = {[0]=group.Group(klass, layout.floating)}
     klass.current = 1
     klass.name = name
     klass.ratios = ratios or {}
     klass.screen = nil
-    klass.tag = capi.tag(name)
+    local t = capi.tag(name)
+    klass.tag = t
+    tags[t] = klass
 end
 )
+
 
 function Tag:group(idx)
     local idx = idx or self.current
