@@ -63,6 +63,12 @@ function Group:set(cli)
     end
 end
 
+function Group:focus()
+    local c = self:client()
+    if not c then return end
+    c:focus()
+end
+
 function Group:remove(c)
     if not c then
         local idx = self.current
@@ -81,12 +87,12 @@ function Group:remove(c)
                 break
             end
         end
-        if #self.clients and self.current > #self.clients then
+        if #self.clients > 0 and self.current > #self.clients then
             self.current = #self.clients
         end
     end
 
-    if self ~= self.tag.groups[0] and #self.clients == 0 then
+    if  #self.clients == 0 and self ~= self.tag.groups[0] and (self ~= self.tag.groups[1] or #self.tag.groups >1) then
         util.debug("removing group")
         self.tag:remove(self)
     end

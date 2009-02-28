@@ -33,65 +33,49 @@ screens = screen.screens
 function left()
     local t = screen():tag()
     t:prev()
-    --client.focus.disable()
-    t:group():client():focus()
-    --client.focus.enable()
+    t:focus()
 end
 
 function right()
     local t = screen():tag()
     t:next()
-    --client.focus.disable()
-    t:group():client():focus()
-    --client.focus.enable()
+    t:focus()
 end
 
 function down()
     local g = screen():tag():group()
     g:next()
-    --client.focus.disable()
-    g:client():focus()
-    --client.focus.enable()
+    g:focus()
 end
 
 function up()
     local g = screen():tag():group()
     g:prev()
-    --client.focus.disable()
-    g:client():focus()
-    --client.focus.enable()
+    g:focus()
 end
 
 function move_left()
     local t = screen():tag()
     t:move_prev()
-    --client.focus.disable()
-    t:group():client():focus()
-    --client.focus.enable()
+    t:focus()
 end
 
 function move_right()
     local t = screen():tag()
     t:move_next()
-    --client.focus.disable()
-    t:group():client():focus()
-    --client.focus.enable()
+    t:focus()
 end
 
 function move_up()
     local g = screen():tag():group()
     g:move_prev()
-    --client.focus.disable()
-    g:client():focus()
-    --client.focus.enable()
+    g:focus()
 end
 
 function move_down()
     local g = screen():tag():group()
     g:move_next()
-    --client.focus.disable()
-    g:client():focus()
-    --client.focus.enable()
+    g:focus()
 end
 
 function restart()

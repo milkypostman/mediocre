@@ -18,7 +18,6 @@ local capi = {
     client = client
 }
 
-
 local hooks = require("mediocre.hooks")
 local util = require("mediocre.util")
 local group = require("mediocre.group")
@@ -98,13 +97,15 @@ end
 -- when we focus by client then we have to worry about getting our tree
 -- structure pointing right again.  this should only happen when we focus by
 -- mouse, or urgent.
-focus = {enabled = false}
+local focus = {enabled = false}
 function focus.disable()
     focus.enabled = false
 end
 function focus.enable()
     focus.enabled = true
 end
+hooks.focus.register(focus.run)
+
 function focus.run(c)
     if focus.enabled then
         util.debug("--Focus Function")
@@ -127,8 +128,9 @@ function focus.run(c)
         cli:focus()
     end
 end
-setmetatable(focus, {__call = function(_,c) focus.run(c) end})
+hooks.mouse_enter.register(focus.enable)
 
+setmetatable(focus, {__call = function(_,c) focus.run(c) end})
 
 local function manage(c, startup)
     local s = screen.current()
@@ -155,6 +157,7 @@ local function manage(c, startup)
 
     capi.client.focus = c
 end
+hooks.manage.register(manage)
 
 local function unmanage(c)
     local cls = clients[c]
@@ -163,17 +166,14 @@ local function unmanage(c)
         local cc = clients[c.transient_for]
         cc:focus()
     else
-        local g = screen():tag():group()
-        if not g then return end
-        local cc = g:client()
-        if not cc then return end
-        cc:focus()
+        screen():tag():focus()
     end
 end
 
-hooks.mouse_enter.register(focus.enable)
-hooks.manage.register(manage)
 hooks.unmanage.register(unmanage)
-hooks.focus.register(focus.run)
+
+function lookup(c)
+    return clients[c]
+end
 
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80

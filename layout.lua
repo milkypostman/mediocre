@@ -7,12 +7,15 @@
 
 local tag = tag
 local ipairs = ipairs
+local setmetatable = setmetatable
 
 local util = require("mediocre.util")
 
 module("mediocre.layout")
 
-function max(grp, g)
+max = {}
+max.name = "max"
+function max.arrange(_, grp, g)
     for i,c in ipairs(grp.clients) do
         c:geometry(g)
         if i == grp.current then
@@ -20,8 +23,11 @@ function max(grp, g)
         end
     end
 end
+setmetatable(max, {__call = max.arrange})
 
-function divide(grp, g)
+divide = {}
+divide.name = "divide"
+function divide.arrange(_, grp, g)
     local height = g.height / #grp.clients
     g.height = height
     for i,c in ipairs(grp.clients) do
@@ -32,8 +38,11 @@ function divide(grp, g)
         g.y = g.y+height
     end
 end
+setmetatable(divide, {__call = divide.arrange})
 
-function floating(grp, g)
+floating = {}
+floating.name = "floating"
+function floating.arrange(_, grp, g)
     for i,c in ipairs(grp.clients) do
         util.debug("floating layout")
         if i == grp.current then
@@ -41,6 +50,7 @@ function floating(grp, g)
         end
     end
 end
+setmetatable(floating, {__call = floating.arrange})
 
 
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80

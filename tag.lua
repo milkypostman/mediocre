@@ -23,7 +23,7 @@ module("mediocre.tag")
 tags = otable()
 
 Tag = util.class(function(klass, name, ratios )
-    klass.groups = {[0]=group.Group(klass, layout.floating)}
+    klass.groups = {[0]=group.Group(klass, layout.floating), [1] = group.Group(klass, layout.max)}
     klass.current = 1
     klass.name = name
     klass.ratios = ratios or {}
@@ -34,7 +34,6 @@ Tag = util.class(function(klass, name, ratios )
 end
 )
 
-
 function Tag:group(idx)
     local idx = idx or self.current
     return self.groups[idx]
@@ -42,7 +41,14 @@ end
 
 function Tag:add(g, idx)
     local idx = idx or self.current
+    util.debug("adding group at: "..idx)
     table.insert(self.groups, idx, g)
+end
+
+function Tag:focus()
+    local g = self:group()
+    if not g then return end
+    g:focus()
 end
 
 function Tag:remove(grp)
@@ -55,7 +61,7 @@ function Tag:remove(grp)
             break
         end
     end
-    if #self.groups ~= 0 and self.current > #self.groups then
+    if #self.groups > 0 and self.current > #self.groups then
         self.current = #self.groups
     end
     util.debug("grp:" .. tostring(self.current))
@@ -70,18 +76,22 @@ function Tag:set(grp)
     end
 end
 
-
 function Tag:move(dir)
     local oldidx = self.current
     local og = self.groups[oldidx]
+    if not og then return end
 
     local c = og:client()
+    if not c then return end
 
     local nextidx = oldidx + dir
-    local ng = self.groups[nextidx]
 
+    local ng
     if nextidx < 1 then
         nextidx = 1
+        ng = nil
+    else
+        ng = self.groups[nextidx]
     end
 
     if not ng then
@@ -91,7 +101,6 @@ function Tag:move(dir)
 
     og:remove(c)
     ng:add(c)
-
     self.current = nextidx
 end
 
@@ -141,5 +150,8 @@ function Tag:prev()
     self.current = (self.current-2) % #self.groups + 1
 end
 
+function lookup(t)
+    return tags[t]
+end
 
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80
