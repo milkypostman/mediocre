@@ -98,17 +98,9 @@ end
 -- structure pointing right again.  this should only happen when we focus by
 -- mouse, or urgent.
 local focus = {enabled = false}
-function focus.disable()
-    focus.enabled = false
-end
-function focus.enable()
-    focus.enabled = true
-end
-hooks.focus.register(focus.run)
 
 function focus.run(c)
     if focus.enabled then
-        util.debug("--Focus Function")
         focus.enabled = false
         local old = screen():tag():group():client()
         local cli = clients[c]
@@ -119,7 +111,7 @@ function focus.run(c)
         for i, g in pairs(t.groups) do
             if cli.groups[g] then
                 g:set(cli)
-                if not old.groups[g] then
+                if old and not old.groups[g] then
                     t:set(g)
                 end
                 break
@@ -128,7 +120,8 @@ function focus.run(c)
         cli:focus()
     end
 end
-hooks.mouse_enter.register(focus.enable)
+hooks.focus.register(focus.run)
+hooks.mouse_enter.register(function() focus.enabled = true end)
 
 setmetatable(focus, {__call = function(_,c) focus.run(c) end})
 
