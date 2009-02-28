@@ -1,0 +1,195 @@
+require("mediocre")
+require("beautiful")
+
+theme = "shiki"
+themePath = os.getenv("HOME").."/.config/awesome/themes/"..theme
+beautiful.init(themePath)
+
+local screens = mediocre.screens
+local util = mediocre.util
+local hooks = mediocre.hooks
+
+local terminal = "urxvtc"
+local browser = "firefox"
+
+util.debug("RC LOADING")
+util.debug(#screens)
+for i = 1, #screens do
+    util.debug("Initializing Tags")
+    screens[i]:add(mediocre.Tag("1:main", {.7, .3}))
+    screens[i]:add(mediocre.Tag("2:www"))
+    screens[i]:add(mediocre.Tag("3:dev"))
+    screens[i]:add(mediocre.Tag("4:misc"))
+end
+
+--- bindings
+local mod = {}
+mod.alt = {"Mod1"}
+mod.super = {"Mod4"}
+mod.shift = {"Shift"}
+mod.control = {"Control"}
+
+mod.super_alt = {mod.super[1], mod.alt[1]}
+mod.super_shift = {mod.super[1], mod.shift[1]}
+mod.super_control = {mod.super[1], mod.control[1]}
+mod.control_alt = {mod.control[1], mod.alt[1]}
+mod.control_shift = {mod.control[1], mod.shift[1]}
+mod.control_alt_shift = {mod.control[1], mod.alt[1], mod.shift[1]}
+mod.shift_alt = {mod.shift[1], mod.alt[1]}
+
+function spawn(cmd, screen)
+    if cmd and cmd ~= "" then
+        return awesome.spawn(cmd .. "&", screen or mouse.screen)
+    end
+end
+
+local bindings = {}
+bindings.global = {
+    [{  mod.super, "Return"}] = function() spawn(terminal) end,
+    [{  mod.super, "f"}] = function() spawn(browser) end,
+    [{ mod.super_control, "r" }] = mediocre.restart,
+    [{ mod.super, "h" }] = mediocre.left,
+    [{ mod.super, "l" }] = mediocre.right,
+    [{ mod.super, "j" }] = mediocre.down,
+    [{ mod.super, "k" }] = mediocre.up,
+    [{ mod.super, "space" }] = mediocre.float_layer,
+    [{ mod.super_control, "h" }] = mediocre.move_left,
+    [{ mod.super_control, "l" }] = mediocre.move_right,
+    [{ mod.super_control, "j" }] = mediocre.move_down,
+    [{ mod.super_control, "k" }] = mediocre.move_up,
+    [{ mod.super, "c" }] = function () client.focus:kill() end,
+    [{ mod.super, "s" }] = function() mediocre.set_layout(mediocre.layout.max) end,
+    [{ mod.super, "d" }] = function() mediocre.set_layout(mediocre.layout.divide) end,
+}
+
+local keys = {}
+for mod, f in pairs(bindings.global) do
+    table.insert( keys, key( mod[1], mod[2], f ) )
+end
+
+bindings.tag = {
+    [mod.super] = function(t) mediocre.screen():goto(t) end,
+    [mod.super_shift] = function(t) mediocre.screen():tag():group():client():move(t) end,
+}
+
+--{{ switching tag mod
+keynumber = 9
+for i = 1, keynumber do
+    for k, f in pairs(bindings.tag) do
+        table.insert(keys,
+        key( k, i , function()
+            f(i)
+        end))
+    end
+end
+
+root.keys(keys)
+
+--{{ buttons for widgets
+local buttons = {}
+
+buttons.tasklist = {
+}
+
+buttons.taglist = {
+    button( mod, 1, function (t) 
+        local t = mediocre.tag.lookup(t)
+        mediocre.screen():goto(t)
+    end),
+}
+
+
+local tasklist = {}
+local taglist = {}
+local clock
+local layoutbox
+local statusbar = {}
+local space = " "
+
+local separator_left = widget({ type = "textbox", name = "separatorleft", align = "left" })
+separator_left.text = '| '
+
+local separator_right = widget({ type = "textbox", name = "separatorRight", align = "right" })
+separator_right.text = '| '
+
+for i = 1, #screens do
+    util.debug("Initializing WiBox")
+
+    --{{ tasklist widget
+    tasklist[i] = mediocre.widget.tasklist.new(
+    function(c)
+        if c == client.focus then
+            return util.set_fg(beautiful.fg_tasklist, c.name)
+        end
+    end,
+    buttons.tasklist)
+
+    --{{ taglist widget
+    taglist[i] = mediocre.widget.taglist.new(1, mediocre.widget.taglist.label.all, buttons.taglist)
+
+    layoutbox = widget({ type = "textbox", name = "layoutbox", align = "left" })
+
+    --{{ clock widget
+    clock = widget({ type = "textbox", name = "clock", align = "right" })
+    hooks.timer.register(1, function()
+        local date = os.date("%Y/%m/%d")
+        local time = os.date("%H:%M:%S")
+
+        clock.text = date..space..util.set_fg(beautiful.clock, time)..space
+    end)
+
+    statusbar[i] = wibox({
+        position = "top", 
+        height = 16, 
+        name = 'statusbar'..i, 
+        fg = beautiful.fg_normal, 
+        bg = beautiful.bg_normal, 
+    })
+    statusbar[i].widgets = {
+        taglist[i], 
+        separator_left, 
+        layoutbox,
+        separator_left, 
+        tasklist[i],
+        clock,
+    }
+    statusbar[i].screen = 1
+    statusbar[i] = w
+end
+
+
+--{{ hooks
+hooks.mouse_enter.register(function (c)
+        client.focus = c
+end)
+
+
+hooks.arrange.register(function(c)
+    local g = mediocre.screen():tag():group()
+    local lstr
+    if not g then
+        lstr = "0"
+    else
+        lstr = g.layout.name
+        if lstr == "max" then
+            lstr = "[]="
+        elseif lstr == "divide" then
+            lstr = "[]="
+        end
+    end
+    layoutbox.text = lstr.." "
+end)
+
+hooks.focus.register(function(c)
+    c.border_color = beautiful.border_focus
+end)
+
+hooks.unfocus.register(function(c)
+    c.border_color = beautiful.border_normal
+end)
+
+hooks.manage.register(function(c)
+    c.border_width = beautiful.border_width
+    c.border_color = beautiful.border_focus
+end
+)
