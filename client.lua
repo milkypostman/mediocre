@@ -15,9 +15,12 @@ local math = math
 local setmetatable = setmetatable
 
 local capi = {
-    client = client
+    client = client,
+    widget = widget,
+    wibox = wibox,
 }
 
+local beautiful = require("beautiful")
 local hooks = require("mediocre.hooks")
 local util = require("mediocre.util")
 local group = require("mediocre.group")
@@ -34,13 +37,18 @@ setmetatable(Client, {__call= function(_, c)
     local o = {}
     o.groups = {}
     o.client = c
+    o.titlebar = nil
     local mt = {}
     mt.__index = function(obj, data)
         if data == "name" then
             return obj.client.name
         elseif data == "geometry" then
             return function(s, g)
-                s.client:geometry(g)
+                if g then
+                    return s.client:geometry(g)
+                else
+                    return s.client:geometry()
+                end
             end
         elseif data == "raise" then
             return function(s)
@@ -58,6 +66,60 @@ end
 
 function Client:focus()
     capi.client.focus = self.client
+    if self.titlebar then
+        self.titlebar.fg = beautiful.titlebar_fg_focus or beautiful.fg_focus
+        self.titlebar.bg = beautiful.titlebar_bg_focus or beautiful.bg_focus
+        --self.titlebar.border_width = beautiful.border_width
+        self.titlebar.border_color = beautiful.border_focus
+    end
+end
+
+function Client:unfocus()
+    if self.titlebar then
+        self.titlebar.fg = beautiful.titlebar_fg_normal or beautiful.fg_normal
+        self.titlebar.bg = beautiful.titlebar_bg_normal or beautiful.bg_normal
+        --self.titlebar.border_width = beautiful.border_width
+        self.titlebar.border_color = beautiful.border_normal
+    end
+end
+
+function Client:set_titlebar(enabled)
+    if enabled == true and not self.titlebar then
+        util.debug("setting up titlebar")
+        if self.client.type ~= 'normal' and self.client.type ~= 'dialog' then return end
+        util.debug("setting up titlebar")
+        local theme = beautiful.get()
+        local tb = capi.wibox({})
+
+        local title = capi.widget({type='textbox', align='flex'})
+        title.text = ' '..util.escape(self.client.name)..' '
+
+        local appicon = capi.widget({ type = "imagebox", align = "left" })
+        appicon.image = self.client.icon
+
+        tb.widgets = {appicon = appicon, title = title}
+        self.client.titlebar = tb
+        self.titlebar = tb
+
+        tb.fg = beautiful.fg_focus
+        tb.bg = beautiful.bg_focus
+        tb.border_width = beautiful.border_width
+        tb.border_color = beautiful.border_focus
+
+        self.client:geometry(self.client:geometry())
+    elseif enabled == false and self.titlebar then
+        self.client.titlebar = nil
+        self.titlebar = nil
+    end
+end
+
+function Client:update(prop)
+    if self.titlebar then
+        local widgets = self.titlebar.widgets
+        if prop == 'name' then
+            widgets.title.text = ' '..util.escape(self.client.name)..' '
+        end
+    end
 end
 
 function Client:orphan()
@@ -97,13 +159,13 @@ end
 -- when we focus by client then we have to worry about getting our tree
 -- structure pointing right again.  this should only happen when we focus by
 -- mouse, or urgent.
-local focus = {enabled = false}
+local mouse_enter = false
 
-function focus.run(c)
-    if focus.enabled then
-        focus.enabled = false
+local function focus(c)
+    local cli = clients[c]
+    if cli and mouse_enter then
+        mouse_enter = false
         local old = screen():tag():group():client()
-        local cli = clients[c]
 
         local s = screen()
         local t = s:tag()
@@ -117,13 +179,31 @@ function focus.run(c)
                 break
             end
         end
-        cli:focus()
+        if cli then
+            cli:focus()
+        end
     end
 end
-hooks.focus.register(focus.run)
-hooks.mouse_enter.register(function() focus.enabled = true end)
 
-setmetatable(focus, {__call = function(_,c) focus.run(c) end})
+local function unfocus(c)
+    local cli = clients[c]
+    if cli then
+        cli:unfocus()
+    end
+end
+
+local function update(c, prop)
+    local cli = clients[c]
+    if cli then
+        cli:update(prop)
+    end
+end
+
+
+hooks.focus.register(focus)
+hooks.unfocus.register(unfocus)
+hooks.property.register(update)
+hooks.mouse_enter.register(function() mouse_enter = true end)
 
 local function manage(c, startup)
     local s = screen.current()

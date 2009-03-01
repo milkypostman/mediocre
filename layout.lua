@@ -13,6 +13,46 @@ local util = require("mediocre.util")
 
 module("mediocre.layout")
 
+
+stack = {}
+stack.name = "stack"
+function stack.arrange(_, grp, g)
+    local num = #(grp.clients)
+
+    local h = {}
+    h.x = g.x
+    h.y = g.y
+    h.width = g.width
+    local height
+
+    for i,c in ipairs(grp.clients) do
+        -- we can probably do this outside the loop at some point
+        local size = 20
+        if c.titlebar then
+            size = c.titlebar:geometry().height
+        end
+
+        if not height then
+            height =  g.height - (size * (num -1))
+            h.height = height
+        end
+
+        c:geometry(h)
+
+        if i == grp.current then
+            h.y = h.y + h.height
+        else
+            h.y = h.y + size
+        end
+        -- this is a terrible way to have to do things
+        -- this causes a bunch of loops for each client
+        if i >= grp.current then
+            c:raise()
+        end
+    end
+end
+setmetatable(stack, {__call = stack.arrange})
+
 max = {}
 max.name = "max"
 function max.arrange(_, grp, g)
