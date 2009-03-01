@@ -8,6 +8,7 @@ local pairs = pairs
 local ipairs = ipairs
 local clients = clients
 local table = table
+local otable = otable
 local awesome = awesome
 local type = type
 local capi = {
@@ -99,10 +100,25 @@ function set_layout(l)
     capi.hooks.arrange()(screen().screen)
 end
 
-function float_layer()
+-- FIXME this is a hack
+local previous = otable()
+function float_layer_toggle()
     local t = screen():tag()
-    t.current=0
-    capi.hooks.arrange()(screen().screen)
+    if t.current == 0 then
+        -- go back to previous or 1
+        local p = previous[t] or 1
+        t.current = p
+    else
+        -- goto float layer
+        previous[t] = t.current
+        t.current=0
+    end
+    local c = t:group():client()
+    if c then
+        c:focus()
+    else
+        capi.hooks.arrange()(screen().screen)
+    end
 end
 
 

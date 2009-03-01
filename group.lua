@@ -28,10 +28,12 @@ function Group:client()
 end
 
 function Group:next()
+    if #self.clients < 1 then return end
     self.current = (self.current % #self.clients) + 1
 end
 
 function Group:prev()
+    if #self.clients < 1 then return end
     self.current = ((self.current-2) % #self.clients) + 1
 end
 
@@ -99,7 +101,7 @@ end
 
 function Group:remove(c)
     local c = c or self.clients[self.current]
-    if not c then return end
+    if not c or not c.groups[self] then return end
 
     for i = c.groups[self], #self.clients-1 do
         local cli = self.clients[i+1]

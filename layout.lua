@@ -46,7 +46,7 @@ function stack.arrange(_, grp, g)
         end
         -- this is a terrible way to have to do things
         -- this causes a bunch of loops for each client
-        if i >= grp.current then
+        if i == grp.current then
             c:raise()
         end
     end
@@ -84,7 +84,6 @@ floating = {}
 floating.name = "floating"
 function floating.arrange(_, grp, g)
     for i,c in ipairs(grp.clients) do
-        util.debug("floating layout")
         if i == grp.current then
             c:raise()
         end

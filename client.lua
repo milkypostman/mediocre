@@ -183,6 +183,7 @@ local function focus(c)
             cli:focus()
         end
     end
+    --mouse_enter = true
 end
 
 local function unfocus(c)

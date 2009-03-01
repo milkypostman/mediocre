@@ -70,6 +70,12 @@ function Screen:goto(t)
     c:focus()
 end
 
+function Screen:arrange()
+    local wa = capi.screen[self.screen].workarea
+    local tag = self:tag()
+    tag:arrange(wa)
+end
+
 screens = {}
 local _current
 
@@ -78,9 +84,9 @@ function current()
 end
 
 local function arrange(s)
-    local wa = capi.screen[s].workarea
-    local tag = screens[s]:tag()
-    tag:arrange(wa)
+    local s = screens[s]
+    if not s then return end
+    s:arrange()
 end
 
 hooks.arrange.register(arrange)
