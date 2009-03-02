@@ -8,7 +8,6 @@ local otable = otable
 local mouse = mouse
 local table = table
 local pairs = pairs
-local ipairs = ipairs
 local tostring = tostring
 local type = type
 local math = math
@@ -64,9 +63,11 @@ setmetatable(Client, {__call= function(_, c)
 end
 })
 
-function Client:focus()
-    capi.client.focus = self.client
-    if self.titlebar then
+-- internal simply says that we don't need to reassign the capi client
+function Client:focus(internal)
+    if not internal then
+        capi.client.focus = self.client
+    elseif self.titlebar then
         self.titlebar.fg = beautiful.titlebar_fg_focus or beautiful.fg_focus
         self.titlebar.bg = beautiful.titlebar_bg_focus or beautiful.bg_focus
         --self.titlebar.border_width = beautiful.border_width
@@ -74,8 +75,8 @@ function Client:focus()
     end
 end
 
-function Client:unfocus()
-    if self.titlebar then
+function Client:unfocus(internal)
+    if internal and self.titlebar then
         self.titlebar.fg = beautiful.titlebar_fg_normal or beautiful.fg_normal
         self.titlebar.bg = beautiful.titlebar_bg_normal or beautiful.bg_normal
         --self.titlebar.border_width = beautiful.border_width
@@ -163,33 +164,25 @@ local mouse_enter = false
 
 local function focus(c)
     local cli = clients[c]
-    if cli and mouse_enter then
-        mouse_enter = false
-        local old = screen():tag():group():client()
-
+    if cli then
         local s = screen()
         local t = s:tag()
 
         for i, g in pairs(t.groups) do
             if cli.groups[g] then
                 g:set(cli)
-                if old and not old.groups[g] then
-                    t:set(g)
-                end
+                t:set(g)
                 break
             end
         end
-        if cli then
-            cli:focus()
-        end
+        cli:focus(true)
     end
-    --mouse_enter = true
 end
 
 local function unfocus(c)
     local cli = clients[c]
     if cli then
-        cli:unfocus()
+        cli:unfocus(true)
     end
 end
 
@@ -207,6 +200,7 @@ hooks.property.register(update)
 hooks.mouse_enter.register(function() mouse_enter = true end)
 
 local function manage(c, startup)
+    if c.sticky == true then return end
     local s = screen.current()
 
     local t = s:tag()

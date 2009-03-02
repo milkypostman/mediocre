@@ -7,7 +7,6 @@
 
 local table = table
 local clients = clients
-local ipairs = ipairs
 
 local util = require("mediocre.util")
 local layout = require("mediocre.layout")
@@ -85,11 +84,6 @@ function Group:add(c, idx)
 end
 
 function Group:set(cli)
-    --for i, c in ipairs(self.clients) do
-        --if cli == c then
-            --self.current = i
-        --end
-    --end
     self.current = cli.groups[self]
 end
 

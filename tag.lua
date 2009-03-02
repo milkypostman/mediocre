@@ -4,7 +4,6 @@
 -- @release @AWESOME_VERSION@
 ---------------------------------------------------------------------------
 
-local ipairs = ipairs
 local otable = otable
 local table = table
 local tostring = tostring
@@ -85,12 +84,7 @@ function Tag:remove(g)
 end
 
 function Tag:set(grp)
-    for i,g in ipairs(self.groups) do
-        if g == grp then
-            self.current = i
-            break
-        end
-    end
+    self.current = grp.tagidx
 end
 
 function Tag:move(dir)
