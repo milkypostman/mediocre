@@ -57,8 +57,8 @@ max = {}
 max.name = "max"
 function max.arrange(_, grp, g)
     for i,c in ipairs(grp.clients) do
-        c:geometry(g)
         if i == grp.current then
+            c:geometry(g)
             c:raise()
         end
     end
